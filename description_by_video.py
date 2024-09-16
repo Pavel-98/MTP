@@ -1,8 +1,14 @@
+import os
+
 from PIL import Image
 
 from transformers import AutoTokenizer, AutoProcessor, AutoModel, AutoConfig
 from decord import VideoReader, cpu    # pip install decord
 import torch
+
+from time_reporter import TimeReporter
+from google_spreadsheet import GoogleSpreadsheetsService
+
 model_path = 'mPLUG/mPLUG-Owl3-7B-240728'
 config = AutoConfig.from_pretrained(model_path, trust_remote_code=True)
 print(config)
@@ -37,7 +43,11 @@ def encode_video(video_path):
     print('num frames:', len(frames))
     return frames
 
-file = open('video_result.txt', 'w')
+service = GoogleSpreadsheetsService('token.json')
+reporter = TimeReporter()
+spreadsheet_id = os.environ.get('SPREADSHEET_ID', '19ywXrqNZciW3kr57fD4_Y7Dey1uLGCYVVoGDbytllj8')
+title = os.environ.get('TITLE', 'cleaned_scenes')
+column = os.environ.get('COLUMN', 16)
 for i in range(1, 253):
     video_file_number = "0" * (3 - len(str(i))) + str(i)
     videos = ['/content/scenedect_videos/segment_3-Scene-' + video_file_number + '.mp4']
@@ -55,12 +65,13 @@ for i in range(1, 253):
 
 
     g = model.generate(**inputs)
+    reporter.report_time('Description for ' + str(1))
     print(g)
-    file.write(g[0] + '\n')
+    service.update_value(spreadsheet_id, title, i + 1, column, str(g))
     messages = [
     {"role": "user",
      "content": """Video. <|video|> Describe this movie scene."""},
     {"role": "assistant",
      "content": ""}
 ]
-file.close()
+print(reporter.get_report())

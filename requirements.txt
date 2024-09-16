@@ -19,5 +19,6 @@ scikit-learn
 numpy
 decord
 opencv-python
+flash_attn
 #gradio==4.41.0
 http://thunlp.oss-cn-qingdao.aliyuncs.com/multi_modal/never_delete/modelscope_studio-0.4.0.9-py3-none-any.whl
